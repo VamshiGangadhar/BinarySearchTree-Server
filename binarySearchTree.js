@@ -10,10 +10,34 @@ class BinarySearchTree {
   constructor() {
     this.root = null;
   }
+  // printStructuredTree() {
+  //   const result = [];
+  //   if (!this.root) {
+  //     result.push("Null");
+  //     return result;
+  //   }
+
+  //   const queue = [{ node: this.root, level: 0 }];
+
+  //   while (queue.length > 0) {
+  //     const { node, level } = queue.shift();
+  //     result.push("  ".repeat(level) + node.value);
+
+  //     if (node.left) {
+  //       queue.push({ node: node.left, level: level + 1 });
+  //     }
+  //     if (node.right) {
+  //       queue.push({ node: node.right, level: level + 1 });
+  //     }
+  //   }
+  //   console.log(result);
+  //   return result;
+
+  // }
+
   printStructuredTree() {
-    const result = [];
+    const result = {};
     if (!this.root) {
-      result.push("Null");
       return result;
     }
 
@@ -21,17 +45,48 @@ class BinarySearchTree {
 
     while (queue.length > 0) {
       const { node, level } = queue.shift();
-      result.push("  ".repeat(level) + node.value);
+      if (!result[level]) {
+        result[level] = [];
+      }
+
+      const nodeInfo = {
+        name: node.value,
+        children: [],
+      };
 
       if (node.left) {
+        nodeInfo.children.push({ name: node.left.value });
         queue.push({ node: node.left, level: level + 1 });
       }
+
       if (node.right) {
+        nodeInfo.children.push({ name: node.right.value });
         queue.push({ node: node.right, level: level + 1 });
       }
+
+      result[level].push(nodeInfo);
     }
 
-    return result;
+    // Construct the tree structure recursively
+    const constructTree = (node) => {
+      if (!node) {
+        return null;
+      }
+
+      const tree = {
+        name: node.value,
+        children: [],
+      };
+
+      tree.children.push(constructTree(node.left));
+      tree.children.push(constructTree(node.right));
+
+      return tree;
+    };
+
+    const formattedResult = constructTree(this.root);
+
+    return formattedResult;
   }
 
   addNode(value) {
@@ -44,7 +99,10 @@ class BinarySearchTree {
 
     let current = this.root;
     while (current) {
-      if (value < current.value) {
+      if (value === current.value) {
+        return;
+      }
+      else if (value < current.value) {
         if (!current.left) {
           current.left = newNode;
           return;
@@ -133,22 +191,23 @@ class BinarySearchTree {
 
   findNodeDetails(value) {
     const details = {
-      value,
+      value: null,
       level: 0,
       parents: [],
       children: [],
     };
-
-    this._findNodeDetailsRecursive(this.root, value, details, 0, []);
+  
+    this._findNodeDetailsRecursive(this.root, value, details, 0, null);
     return details;
   }
-
-  _findNodeDetailsRecursive(node, targetValue, details, level, parents) {
+  
+  _findNodeDetailsRecursive(node, targetValue, details, level, parent) {
     if (!node) return;
-
+  
     if (node.value === targetValue) {
+      details.value = node.value;
       details.level = level;
-      details.parents = parents.slice(0, 2); // Ensure at most two parents
+      details.parents = parent !== null ? [parent] : [];
       if (node.left) details.children.push(node.left.value);
       if (node.right) details.children.push(node.right.value);
     } else {
@@ -158,7 +217,7 @@ class BinarySearchTree {
           targetValue,
           details,
           level + 1,
-          [...parents, node.value]
+          node.value
         );
       } else {
         this._findNodeDetailsRecursive(
@@ -166,12 +225,12 @@ class BinarySearchTree {
           targetValue,
           details,
           level + 1,
-          [...parents, node.value]
+          node.value
         );
       }
     }
   }
-
+  
   clear() {
     this.root = null;
   }
